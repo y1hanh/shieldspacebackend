@@ -4,10 +4,10 @@ FIT5120project
 # codebase structure
 
 ```
--shieldspace
--data
--shieldspace-server
-  -src
+|-shieldspace
+|--data
+|--backend
+|----src
 ```
 
 # please do not work on main branch
