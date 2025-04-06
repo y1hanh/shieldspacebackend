@@ -34,6 +34,14 @@ export class UsersService {
   }
 
   async createUser(data: Prisma.UserCreateInput): Promise<User> {
+    const userWithSameEmail = await this.prisma.user.findUnique({
+      where: {
+        email: data.email,
+      },
+    });
+    if (userWithSameEmail) {
+      throw new Error('User with this email already exists');
+    }
     return this.prisma.user.create({
       data,
     });
