@@ -13,7 +13,8 @@ export class AiEmotionsController {
 
   @UseGuards(AuthGuard)
   @Post('emotions')
-  async getAiEmo(@Body() { contents }): Promise<{}> {
+  async getAiEmo(@Body() body): Promise<{}> {
+    const contents = body.transformer_emotions;
     return this.aiService.getEmo(contents);
   }
 }
