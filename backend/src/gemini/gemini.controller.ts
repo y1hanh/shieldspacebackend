@@ -7,7 +7,7 @@ export type Emotions = {
   nrc_emotions: string;
 };
 
-@Controller('ai')
+@Controller()
 export class AiEmotionsController {
   constructor(private readonly aiService: AiEmotionsService) {}
 
