@@ -1,11 +1,16 @@
 import { Module } from '@nestjs/common';
-import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
 import { EmotionsModule } from './emotions/emotions.module';
 import { AiEmotionsModule } from './gemini/gemini.module';
+import { AuthModule } from './auth/auth.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [AuthModule, UsersModule, EmotionsModule, AiEmotionsModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    EmotionsModule,
+    AiEmotionsModule,
+    AuthModule,
+  ],
   controllers: [],
   providers: [],
 })

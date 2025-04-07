@@ -1,5 +1,6 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { AiEmotionsService } from './gemini.service';
+import { AuthGuard } from 'src/auth/auth.guard';
 
 export type Emotions = {
   transformer_emotions: string;
@@ -9,8 +10,10 @@ export type Emotions = {
 @Controller('ai')
 export class AiEmotionsController {
   constructor(private readonly aiService: AiEmotionsService) {}
+
+  @UseGuards(AuthGuard)
   @Post('emotions')
-  async getAiEmo(@Body() { contents }): Promise<string[]> {
+  async getAiEmo(@Body() { contents }): Promise<{}> {
     return this.aiService.getEmo(contents);
   }
 }
