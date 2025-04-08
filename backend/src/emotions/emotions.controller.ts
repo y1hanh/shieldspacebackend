@@ -4,8 +4,7 @@ import { AxiosResponse } from 'axios';
 import { AuthGuard } from 'src/auth/auth.guard';
 
 export type Emotions = {
-  transformer_emotions: string;
-  nrc_emotions: string;
+  user_input: string;
 };
 
 @Controller('model')
@@ -18,8 +17,7 @@ export class EmotionsController {
     const { data } = await this.httpService.axiosRef.post(
       'http://localhost:8000/emotions',
       {
-        transformer_emotions: userInput.transformer_emotions,
-        nrc_emotions: userInput.nrc_emotions,
+        user_input: userInput.user_input,
       },
     );
     return data;

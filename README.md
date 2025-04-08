@@ -10,5 +10,8 @@ FIT5120project
 |----src
 ```
 
+backend port 3000
+data 8000
+
 # please do not work on main branch
 # please work on your own branch
