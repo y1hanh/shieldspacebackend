@@ -8,7 +8,7 @@ export type Emotions = {
   nrc_emotions: string;
 };
 
-@Controller()
+@Controller('model')
 export class EmotionsController {
   constructor(private readonly httpService: HttpService) {}
 
