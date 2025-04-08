@@ -13,7 +13,7 @@ export class EmotionsController {
 
   @UseGuards(AuthGuard)
   @Post('emotions')
-  async getEmo(@Body() userInput: Emotions): Promise<AxiosResponse<Emotions>> {
+  async getEmo(@Body() userInput: Emotions): Promise<AxiosResponse<{}>> {
     const { data } = await this.httpService.axiosRef.post(
       'http://localhost:8000/emotions',
       {
