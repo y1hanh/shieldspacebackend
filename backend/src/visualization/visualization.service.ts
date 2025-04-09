@@ -12,7 +12,7 @@ export class VisualizationService {
 
   async getBullyingCount(): Promise<VisualizationResponse[]> {
     const query = `
-      select label, count(label) from shieldspace.cb_multi_labeled_balanced where label != "not_cyberbullying" group by label;
+      select label, count(label) from shieldspace.bully_message where label != "not_cyberbullying" group by label;
     `;
     const result = await this.dataSource.query(query);
     return result;
