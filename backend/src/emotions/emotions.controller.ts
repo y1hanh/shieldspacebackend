@@ -11,7 +11,6 @@ export type Emotions = {
 export class EmotionsController {
   constructor(private readonly httpService: HttpService) {}
 
-  @UseGuards(AuthGuard)
   @Post('emotions')
   async getEmo(@Body() userInput: Emotions): Promise<AxiosResponse<{}>> {
     const { data } = await this.httpService.axiosRef.post(
