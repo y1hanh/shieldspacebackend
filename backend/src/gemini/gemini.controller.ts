@@ -1,11 +1,7 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { AiEmotionsService } from './gemini.service';
 import { AuthGuard } from 'src/auth/auth.guard';
-
-export type Emotions = {
-  transformer_emotions: string;
-  nrc_emotions: string;
-};
+import { Emotions } from 'src/emotions/emotions.controller';
 
 @Controller()
 export class AiEmotionsController {
@@ -13,8 +9,7 @@ export class AiEmotionsController {
 
   @UseGuards(AuthGuard)
   @Post('emotions')
-  async getAiEmo(@Body() body): Promise<{}> {
-    const contents = body.transformer_emotions;
-    return this.aiService.getEmo(contents);
+  async getAiEmo(@Body() userInput: Emotions): Promise<{}> {
+    return this.aiService.getEmo(userInput.user_input);
   }
 }
