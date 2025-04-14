@@ -1,26 +1,11 @@
 // src/app.controller.ts
-import {
-  Req,
-  Controller,
-  ExecutionContext,
-  Get,
-  UseGuards,
-} from '@nestjs/common';
-import { Authentication } from '@nestjs-cognito/auth';
-import { Request } from 'express';
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import { AuthGuard } from './auth/auth.guard';
 
 @Controller('')
 export class AppController {
   @Get('/')
-  @Authentication()
-  getProtectedRoute(@Req() request: Request) {
-    // const request = context.switchToHttp().getRequest();
-    const token = this.extractTokenFromHeader(request);
-    return { message: 'This is a protected route!' };
-  }
-
-  private extractTokenFromHeader(request: Request): string | undefined {
-    const [type, token] = request.headers.authorization?.split(' ') ?? [];
-    return type === 'Bearer' ? token : undefined;
+  getHello(): string {
+    return 'Hello World!';
   }
 }
