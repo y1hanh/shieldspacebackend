@@ -8,6 +8,7 @@ export type Emotions = {
 };
 
 @Controller('model')
+@UseGuards(AuthGuard)
 export class EmotionsController {
   constructor(private readonly httpService: HttpService) {}
 
