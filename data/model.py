@@ -1,10 +1,18 @@
-import nltk
-from transformers import pipeline
-import textwrap
+# import textwrap
+# import nltk
+import torch
+from huggingface_hub import hf_hub_download
+from transformers import (
+    pipeline,
+    AutoTokenizer,
+    AutoConfig,
+    AutoModelForSequenceClassification,
+    TextClassificationPipeline,
+)
 
 # Download necessary NLTK data
-nltk.download('punkt')
-nltk.download('vader_lexicon')
+# nltk.download('punkt')
+# nltk.download('vader_lexicon')
 
 # --------------------- Initialize Models ---------------------
 # Emotion analysis model using SamLowe's GoEmotions model for improved emotion detection
@@ -23,7 +31,42 @@ toxicity_classifier = pipeline(
     truncation=True
 )
 
+# ── 3. Sexism / Racism detector built from raw .pth  ────────────
+REPO_ID = "jkos0012/sexism_racism_bert_model"
+PT_FILE = "sexism_racism_bert_model.pth"
+TOKENIZER_ID = "bert-base-uncased"
+LABELS = ["sexism", "racism"]
+
+# 3‑A  download the .pth checkpoint once and load it
+ckpt_path = hf_hub_download(REPO_ID, filename=PT_FILE)
+state_dict = torch.load(ckpt_path, map_location="cpu")
+
+# 3‑B  build a compatible BERT config with num_labels=2
+config = AutoConfig.from_pretrained(
+    TOKENIZER_ID,
+    num_labels=len(LABELS),
+    id2label=dict(enumerate(LABELS)),
+    label2id={l: i for i, l in enumerate(LABELS)},
+)
+
+# 3‑C  recreate the classification model and load weights
+bias_model = AutoModelForSequenceClassification.from_config(config)
+missing, unexpected = bias_model.load_state_dict(state_dict, strict=False)
+assert not missing,  f"Missing weights! {missing}"
+assert not unexpected, f"Unexpected keys! {unexpected}"
+
+# 3‑D  wrap in a normal pipeline (sigmoid = multi‑label)
+bias_classifier = TextClassificationPipeline(
+    model=bias_model,
+    tokenizer=AutoTokenizer.from_pretrained(TOKENIZER_ID),
+    function_to_apply="sigmoid",
+    top_k=None,
+)
 # --------------------- Helper Functions ---------------------
+
+
+def get_bias_scores(text: str) -> dict:
+    return {r["label"]: r["score"] for r in bias_classifier(text)[0]}
 
 
 def get_transformer_emotions(text):
@@ -35,7 +78,7 @@ def get_transformer_emotions(text):
     # Sort the results in descending order by score, and take the top 5 entries
     sorted_results = sorted(
         results, key=lambda x: x['score'], reverse=True)[:5]
-    return {item['label']: item['score'] for item in sorted_results}
+    return {item['label']: "{:.3f}".format(item['score']) for item in sorted_results}
 
 
 def get_toxicity_score(text):
@@ -44,7 +87,7 @@ def get_toxicity_score(text):
     Returns a dictionary mapping each toxicity label to its score.
     """
     results = toxicity_classifier(text)[0]
-    return {item['label']: item['score'] for item in results}
+    return {item['label']: "{:.3f}".format(item['score']) for item in results}
 
 
 def display_analysis(message):
@@ -59,64 +102,12 @@ def display_analysis(message):
     # Toxicity Analysis
     toxicity = get_toxicity_score(message)
     toxic_level = toxicity.get('toxic', 0.0)
+
+    bias = get_bias_scores(message)
     return {
         "toxic_level": toxic_level,
         "toxicity": toxicity,
         "emotions": emotions,
-        "trigger_emotion": trigger_emotion
+        "trigger_emotion": trigger_emotion,
+        "bias": bias,
     }
-
-    # Determine friendly toxicity label based on the toxicity score.
-    # if toxic_level > 0.85:
-    #     friendly_tox_level = "🔥 Highly Toxic"
-    # elif toxic_level > 0.5:
-    #     friendly_tox_level = "⚠️ Possibly Offensive"
-    # elif toxic_level > 0.2:
-    #     friendly_tox_level = "🟡 Mildly Risky"
-    # else:
-    #     friendly_tox_level = "✅ Low or Safe"
-
-    # Generate descriptive tags if certain toxicity sub-scores exceed thresholds.
-    # tags = []
-    # if toxicity.get("insult", 0) > 0.6:
-    #     tags.append("🔴 Insult")
-    # if toxicity.get("obscene", 0) > 0.6:
-    #     tags.append("🤬 Obscene")
-    # if toxicity.get("severe_toxic", 0) > 0.4:
-    #     tags.append("🚨 Severe Toxicity")
-    # if toxicity.get("identity_hate", 0) > 0.4:
-    #     tags.append("🛑 Identity Hate")
-    # if toxicity.get("threat", 0) > 0.3:
-    #     tags.append("⚠️ Threat")
-    # tags_str = ", ".join(tags) if tags else "No critical flags"
-
-    # Print the analysis results.
-    # print("\n" + "-" * 80)
-    # print("Message Analyzed:")
-    # print(textwrap.fill(message, width=80))
-
-    # print("\n💡 Emotion Analysis (Top 5):")
-    # for label, score in emotions.items():
-    #     print(f"  {label}: {score:.3f}")
-    # print(f"\n🧠 Primary Emotion: {trigger_emotion}")
-
-    # print("\n⚠️ Toxicity Analysis:")
-    # print(f"  Toxicity Level: {friendly_tox_level}")
-    # print(f"  Detected Tags: {tags_str}")
-    # print("-" * 80 + "\n")
-
-
-# def main():
-#     print("Enter a message to analyze its emotions and toxicity.")
-#     print("Type 'quit' at any time to exit.\n")
-
-#     while True:
-#         message = input("Message: ").strip()
-#         if message.lower() == 'quit':
-#             print("Exiting. Thank you!")
-#             break
-#         display_analysis(message)
-
-
-# if __name__ == "__main__":
-#     main()

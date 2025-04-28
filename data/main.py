@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from model import display_analysis
-import json
 
 
 class Emotions(BaseModel):
