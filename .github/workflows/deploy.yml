@@ -20,7 +20,7 @@ jobs:
       - name: Deploy via SSH
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.DO_USERNAME }}@${{ secrets.DO_HOST }} << 'EOF'
-            cd /path/to/your/project
+            cd /root/shieldspace
             git pull origin main
             docker compose down
             docker compose up --build -d
