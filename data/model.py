@@ -1,5 +1,5 @@
-import textwrap
-import nltk
+# import textwrap
+# import nltk
 import torch
 from huggingface_hub import hf_hub_download
 from transformers import (
@@ -11,8 +11,8 @@ from transformers import (
 )
 
 # Download necessary NLTK data
-nltk.download('punkt')
-nltk.download('vader_lexicon')
+# nltk.download('punkt')
+# nltk.download('vader_lexicon')
 
 # --------------------- Initialize Models ---------------------
 # Emotion analysis model using SamLowe's GoEmotions model for improved emotion detection
@@ -111,6 +111,3 @@ def display_analysis(message):
         "trigger_emotion": trigger_emotion,
         "bias": bias,
     }
-
-
-print(display_analysis("I hate you, you are a loser"))

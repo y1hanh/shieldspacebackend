@@ -1,4 +1,4 @@
-absl-py==2.2.2
+absl-py>=2.1.0
 annotated-types==0.7.0
 anyio==4.9.0
 appnope==0.1.4
@@ -59,7 +59,7 @@ nbclient==0.10.2
 nbconvert==7.16.6
 nbformat==5.10.4
 networkx==3.4.2
-nltk==3.9.1
+# nltk==3.9.1
 NRCLex==3.0.0
 numpy==2.0.2
 opt_einsum==3.4.0
