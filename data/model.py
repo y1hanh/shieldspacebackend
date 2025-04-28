@@ -5,8 +5,8 @@ from huggingface_hub import hf_hub_download
 from transformers import (
     pipeline,
     AutoTokenizer,
-    AutoConfig,
-    AutoModelForSequenceClassification,
+    BertConfig,
+    BertForSequenceClassification,
     TextClassificationPipeline,
 )
 
@@ -32,41 +32,45 @@ toxicity_classifier = pipeline(
 )
 
 # ── 3. Sexism / Racism detector built from raw .pth  ────────────
-REPO_ID = "jkos0012/sexism_racism_bert_model"
-PT_FILE = "sexism_racism_bert_model.pth"
-TOKENIZER_ID = "bert-base-uncased"
-LABELS = ["sexism", "racism"]
+REPO_ID = "jkos0012/bert-cyberbullying"   # <— new repo
+PT_FILE = "bert_cyberbullying.pth"        # file inside repo
+BASE_MODEL = "bert-base-uncased"             # backbone
 
-# 3‑A  download the .pth checkpoint once and load it
+# 3-A  download & load the checkpoint
 ckpt_path = hf_hub_download(REPO_ID, filename=PT_FILE)
 state_dict = torch.load(ckpt_path, map_location="cpu")
 
-# 3‑B  build a compatible BERT config with num_labels=2
-config = AutoConfig.from_pretrained(
-    TOKENIZER_ID,
-    num_labels=len(LABELS),
-    id2label=dict(enumerate(LABELS)),
-    label2id={l: i for i, l in enumerate(LABELS)},
+# 3-B  infer output-layer size (e.g. 2 × 768)
+num_labels = state_dict["classifier.weight"].shape[0]
+
+# 3-C  give the two output neurons real names
+LABELS = ["religion", "age"]          # index 0 → age, index 1 → religion
+id2label = dict(enumerate(LABELS))
+label2id = {v: k for k, v in id2label.items()}
+
+# 3-D  build a compatible BERT config & model
+config = BertConfig.from_pretrained(
+    BASE_MODEL,
+    num_labels=num_labels,
+    id2label=id2label,
+    label2id=label2id,
 )
+cyber_model = BertForSequenceClassification(config)
+# <— no more size-mismatch!
+cyber_model.load_state_dict(state_dict, strict=True)
 
-# 3‑C  recreate the classification model and load weights
-bias_model = AutoModelForSequenceClassification.from_config(config)
-missing, unexpected = bias_model.load_state_dict(state_dict, strict=False)
-assert not missing,  f"Missing weights! {missing}"
-assert not unexpected, f"Unexpected keys! {unexpected}"
-
-# 3‑D  wrap in a normal pipeline (sigmoid = multi‑label)
-bias_classifier = TextClassificationPipeline(
-    model=bias_model,
-    tokenizer=AutoTokenizer.from_pretrained(TOKENIZER_ID),
-    function_to_apply="sigmoid",
+# 3-E  wrap in a normal HF pipeline
+cyberbullying_classifier = TextClassificationPipeline(
+    model=cyber_model,
+    tokenizer=AutoTokenizer.from_pretrained(BASE_MODEL),
+    function_to_apply="sigmoid",   # multi-label
     top_k=None,
 )
 # --------------------- Helper Functions ---------------------
 
 
-def get_bias_scores(text: str) -> dict:
-    return {r["label"]: r["score"] for r in bias_classifier(text)[0]}
+def get_cyber_scores(text: str) -> dict:
+    return {r["label"]: r["score"] for r in cyberbullying_classifier(text)[0]}
 
 
 def get_transformer_emotions(text):
@@ -103,7 +107,7 @@ def display_analysis(message):
     toxicity = get_toxicity_score(message)
     toxic_level = toxicity.get('toxic', 0.0)
 
-    bias = get_bias_scores(message)
+    bias = get_cyber_scores(message)
     return {
         "toxic_level": toxic_level,
         "toxicity": toxicity,
