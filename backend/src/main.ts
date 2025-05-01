@@ -6,11 +6,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors();
 
-  // app.use((req, res, next) => {
-  //   res.removeHeader('X-Powered-By');
-  //   res.removeHeader('Server');
-  //   next();
-  // });
+  app.use((req, res, next) => {
+    res.removeHeader('X-Powered-By');
+    res.removeHeader('Server');
+    next();
+  });
 
   app.use(
     helmet({
