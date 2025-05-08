@@ -1,50 +1,69 @@
-import { GenerateContentResponse, GoogleGenAI, Type } from '@google/genai';
+import {
+  Candidate,
+  GenerateContentResponse,
+  GoogleGenAI,
+  Type,
+} from '@google/genai';
 import { Injectable } from '@nestjs/common';
 import { response } from 'express';
 
-const model = {
-  model: 'gemini-2.5-pro-exp-03-25',
-  systemInstruction:
-    'You are a tone and emotion analysis system for online messages.\n' +
-    'Given a comment, return tone probabilities (0 to 1), most likely emotions impacted, and bullying-related metadata in raw JSON format only — no explanation, no markdown wrapping.\n' +
-    'Here is the format:\n' +
-    '{ "tone_scores": ..., "bullying_likelihood": ... }\n' +
-    'Here is the message:\n“{user_input}”',
+type scriptResponse = {
+  script: string[];
 };
-
-const generationConfig = {
-  temperature: 1,
-  topP: 0.95,
-  topK: 64,
-  maxOutputTokens: 65536,
-  responseMimeType: 'text/plain',
+export type Script = {
+  user_input: string;
+  role: 'parents' | 'teacher' | 'friends';
 };
-
 @Injectable()
 export class AiEmotionsService {
-  async getEmo(contents: string): Promise<string> {
-    const apiKey = process.env.GEMINI_API_KEY;
-    const ai = new GoogleGenAI({ apiKey });
-    const { candidates } = await ai.models.generateContent({
-      model: model.model,
-      contents,
-      config: {
-        systemInstruction: model.systemInstruction,
-        ...generationConfig,
-      },
-    });
-    let response: string = '';
+  model = 'gemini-2.0-flash-001';
+  ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-    candidates?.forEach((candidate) => {
-      const { content } = candidate;
-      if (content?.parts?.[0]?.text) {
-        response = content.parts[0]?.['text'];
-      }
+  async getScript(userInput: Script): Promise<scriptResponse> {
+    const config = {
+      responseMimeType: 'text/plain',
+      systemInstruction: [
+        {
+          text: `You are a 12 years old kids and you being bullied online. The bullie message is ${userInput}.
+          You are not sure what to do and do not know if you should tell your ${userInput.role || 'parents'}.
+          you decide to message your ${userInput.role || 'parents'}. What is your message.`,
+        },
+      ],
+    };
+
+    const contents = [
+      {
+        role: 'user',
+        parts: [
+          {
+            text: userInput.user_input,
+          },
+        ],
+      },
+    ];
+
+    const { candidates } = await this.ai.models.generateContent({
+      model: this.model,
+      config,
+      contents,
     });
+
+    let response: string[] = [];
+    const { content } = candidates?.[0] as Candidate;
+
+    if (content?.parts?.[0]?.text) {
+      response = content.parts[0]?.['text']
+        .split('\n')
+        .filter((line) => line.trim() !== '');
+    }
 
     if (!Object.entries(response).length) {
       throw new Error('No response from AI');
     }
-    return response;
+    return { script: response };
+  }
+
+  async getEdu(userInput: string): Promise<any> {
+    return {};
   }
 }
