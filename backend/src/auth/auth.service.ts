@@ -9,10 +9,6 @@ export class AuthService {
     username: string,
     pass: string,
   ): Promise<{ access_token: string }> {
-    // const user = await this.usersService.findOne({ email });
-    // if (!user || !(await bcrypt.compare(pass, user.password))) {
-    //   throw new UnauthorizedException();
-    // }
     if (username != process.env.USERNAME || pass != process.env.PASSWORD) {
       throw new UnauthorizedException();
     }
