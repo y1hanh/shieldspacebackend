@@ -3,19 +3,19 @@ import { Injectable } from '@nestjs/common';
 import { fallbackResponse, fallbackResponseCustom, getUserTags } from './utils';
 import { log } from 'console';
 
-export type actionResponse = {
+export type ActionResponse = {
   'immediate-action': string[];
   'long-term-skills': string[];
 };
 
-export type customActionResponse = {
+export type CustomActionResponse = {
   'immediate-action': string[];
   'long-term-skills': string[];
   'coping-advice': string[];
   'encouraging-words': string[];
 };
 
-export type customActionInput = {
+export type CustomActionInput = {
   userInput: string;
   userAnswers: string[];
 };
@@ -25,7 +25,7 @@ export class AiEmotionsService {
   model = 'gemini-2.0-flash-001';
   ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-  async getAction(userInput: string): Promise<actionResponse> {
+  async getAction(userInput: string): Promise<ActionResponse> {
     if (!process.env.GEMINI_API_KEY) {
       throw new Error('Missing GEMINI_API_KEY');
     }
@@ -104,12 +104,11 @@ Structure of the Response do not include asterisk (no more than 200 words):
   }
 
   async getCustomAction(
-    input: customActionInput,
-  ): Promise<customActionResponse> {
+    input: CustomActionInput,
+  ): Promise<CustomActionResponse> {
     if (!process.env.GEMINI_API_KEY) {
       throw new Error('Missing GEMINI_API_KEY');
     }
-    console.log('Custom Action Input:', input);
 
     const config = {
       responseMimeType: 'text/plain',
@@ -177,7 +176,6 @@ Structure your response into:
         .map((line) => line.trim())
         .filter((line) => line !== '');
 
-      console.log('Parsed Lines:', lines);
       const indexOfFirst = lines.findIndex((line) => /^1\./.test(line));
       const indexOfSecond = lines.findIndex((line) => /^2\./.test(line));
       const indexOfThird = lines.findIndex((line) => /^3\./.test(line));
