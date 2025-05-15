@@ -3,7 +3,7 @@ import { actionResponse, AiEmotionsService, Script } from './gemini.service';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { Emotions } from 'src/emotions/emotions.controller';
 
-@UseGuards(AuthGuard)
+// @UseGuards(AuthGuard)
 @Controller('ai')
 export class AiEmotionsController {
   constructor(private readonly aiService: AiEmotionsService) {}
