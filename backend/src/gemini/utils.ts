@@ -1,6 +1,6 @@
-import { actionResponse, customActionResponse } from './gemini.service';
+import { ActionResponse, CustomActionResponse } from './gemini.service';
 
-export function fallbackResponse(): actionResponse {
+export function fallbackResponse(): ActionResponse {
   return {
     'immediate-action': [
       'Acknowledge Feelings: "It\'s okay to feel upset or angry about this message. Your feelings are valid."',
@@ -15,7 +15,7 @@ export function fallbackResponse(): actionResponse {
   };
 }
 
-export function fallbackResponseCustom(): customActionResponse {
+export function fallbackResponseCustom(): CustomActionResponse {
   return {
     'immediate-action': [
       'Acknowledge Feelings: "It\'s okay to feel upset or angry about this message. Your feelings are valid."',
@@ -38,7 +38,7 @@ export function fallbackResponseCustom(): customActionResponse {
   };
 }
 
-export const tagMapping = {
+export const TAGMAPPING = {
   0: {
     '1': 'happy',
     '2': 'confused',
@@ -74,7 +74,7 @@ export function getUserTags(userAnswers: string[]): string[] {
   const tags: string[] = [];
 
   for (let i = 0; i < userAnswers.length; i++) {
-    const tag = tagMapping[i][userAnswers[i]];
+    const tag = TAGMAPPING[i][userAnswers[i]];
     if (tag) tags.push(tag);
   }
 

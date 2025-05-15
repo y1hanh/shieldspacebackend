@@ -1,8 +1,8 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import {
-  actionResponse,
+  ActionResponse,
   AiEmotionsService,
-  customActionInput,
+  CustomActionInput,
 } from './gemini.service';
 import { Emotions } from 'src/emotions/emotions.controller';
 
@@ -12,14 +12,14 @@ export class AiEmotionsController {
   constructor(private readonly aiService: AiEmotionsService) {}
 
   @Post('/action')
-  async getAction(@Body() userInput: Emotions): Promise<actionResponse> {
+  async getAction(@Body() userInput: Emotions): Promise<ActionResponse> {
     return this.aiService.getAction(userInput.user_input);
   }
 
   @Post('/custom-action')
   async getCustomAction(
-    @Body() userInput: customActionInput,
-  ): Promise<actionResponse> {
+    @Body() userInput: CustomActionInput,
+  ): Promise<ActionResponse> {
     return this.aiService.getCustomAction(userInput);
   }
 }
