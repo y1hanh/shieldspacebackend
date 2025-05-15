@@ -6,7 +6,7 @@ import {
 import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller()
-@UseGuards(AuthGuard)
+// @UseGuards(AuthGuard)
 export class VisualizationController {
   constructor(private readonly visualizationService: VisualizationService) {}
 
