@@ -64,27 +64,24 @@ Structure of the Response do not include asterisk (no more than 200 words):
 
       const content = candidates?.[0]?.content?.parts?.[0]?.text || '';
       if (!content.length || content.length < 30) {
-        console.warn('Gemini returned a short or empty response');
-        return fallbackResponse();
+        throw new Error('Gemini returned a short or empty response');
       }
 
       const lines = content
         .split('\n')
         .map((line) => line.trim())
         .filter((line) => line !== '');
-
+      console.log;
       const indexOfSecond = lines.findIndex((line) => /^2\./.test(line));
       if (indexOfSecond === -1) {
-        console.warn('Could not find section 2 in response');
-        return fallbackResponse();
+        throw new Error('Could not find section 2 in response');
       }
 
       const immediate = lines.slice(1, indexOfSecond);
       const longTerm = lines.slice(indexOfSecond + 1);
 
       if (immediate.length === 0 || longTerm.length === 0) {
-        console.warn('Parsed sections are empty');
-        return fallbackResponse();
+        throw new Error('Parsed sections are empty');
       }
 
       if (immediate.length > 4) {
