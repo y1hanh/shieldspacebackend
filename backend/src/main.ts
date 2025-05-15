@@ -14,7 +14,20 @@ async function bootstrap() {
 
   app.use(
     helmet({
-      contentSecurityPolicy: false, // Already handled via Amplify frontend
+      contentSecurityPolicy: {
+        useDefaults: true,
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: [
+            "'self'",
+            'https://fonts.googleapis.com',
+            "'unsafe-inline'",
+          ],
+          fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+          objectSrc: ["'none'"],
+          frameAncestors: ["'none'"],
+        },
+      },
     }),
   );
 
