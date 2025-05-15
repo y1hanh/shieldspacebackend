@@ -8,19 +8,15 @@ export type Emotions = {
 };
 
 @Controller('model')
-@UseGuards(AuthGuard)
+// @UseGuards(AuthGuard)
 export class EmotionsController {
   constructor(private readonly httpService: HttpService) {}
 
   @Post('emotions')
   async getEmo(@Body() userInput: Emotions): Promise<AxiosResponse<{}>> {
-    const { data } = await axios.post(
-      // 'http://localhost:8000/emotions',
-      'http://data:8000/emotions',
-      {
-        user_input: userInput.user_input,
-      },
-    );
+    const { data } = await axios.post('http://data:8000/emotions', {
+      user_input: userInput.user_input,
+    });
     return data;
   }
 }
