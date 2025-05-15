@@ -1,20 +1,23 @@
-import { Candidate, GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from '@google/genai';
 import { Injectable } from '@nestjs/common';
-import { fallbackResponse } from './utils';
+import { fallbackResponse, fallbackResponseCustom, getUserTags } from './utils';
 import { log } from 'console';
-
-type scriptResponse = {
-  script: string[];
-};
 
 export type actionResponse = {
   'immediate-action': string[];
   'long-term-skills': string[];
 };
 
-export type Script = {
-  user_input: string;
-  role: 'parents' | 'teacher' | 'friends';
+export type customActionResponse = {
+  'immediate-action': string[];
+  'long-term-skills': string[];
+  'coping-advice': string[];
+  'encouraging-words': string[];
+};
+
+export type customActionInput = {
+  userInput: string;
+  userAnswers: string[];
 };
 
 @Injectable()
@@ -34,7 +37,7 @@ export class AiEmotionsService {
           text: `You are an empathetic and supportive AI assistant, specifically designed to help children handle hurtful online messages and foster emotional resilience. 
           Your task is to provide an action plan that addresses both the immediate emotional impact of the message and offers long-term strategies to build skills.
 Do not include extra text, explanations. 
-          Structure of the Response do not include asterisk (no more than 200 words):
+Structure of the Response do not include asterisk (no more than 200 words):
 1.Immediate Action
 2.Long-Term Skills to Build`,
         },
@@ -100,47 +103,120 @@ Do not include extra text, explanations.
     }
   }
 
-  async getScript(userInput: Script): Promise<scriptResponse> {
+  async getCustomAction(
+    input: customActionInput,
+  ): Promise<customActionResponse> {
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error('Missing GEMINI_API_KEY');
+    }
+    console.log('Custom Action Input:', input);
+
     const config = {
       responseMimeType: 'text/plain',
       systemInstruction: [
         {
-          text: `You are a 12 years old kids and you being bullied online. The bullie message is ${userInput}.
-          You are not sure what to do and do not know if you should tell your ${userInput.role || 'parents'}.
-          you decide to message your ${userInput.role || 'parents'}. What is your message.`,
+          text: `You are an empathetic and supportive AI assistant, specifically designed to help children handle hurtful online messages and foster emotional resilience. 
+          Your task is to provide an custom action plan based on user's emotion and bullying message that addresses the immediate emotional impact of the message, offers long-term strategies to build skills and coping advice, and encourage user.
+Avoid repeating the tags or the bullying message directly.
+Explain each action in an easy-to-understand and empathetic way, suitable for children aged 10-15.
+Do not use asterisks (*), dashes (-), or Markdown formatting in your response.
+Structure your response into:
+1. Immediate Action
+2. Long-Term Skills to Build
+3. Coping Advice (strategies based on the user's choices)
+4. Encouraging Words (motivation and positivity)`,
         },
       ],
     };
+
+    const tags = getUserTags(input.userAnswers);
 
     const contents = [
       {
         role: 'user',
         parts: [
           {
-            text: userInput.user_input,
+            text: `
+            Bullying Message: "${input.userInput}"
+            User's Emotional Tags:
+- Emotion: ${tags[0]}
+- Perceived Intent: ${tags[1]}
+- Suggested Reaction (if sent to a friend): ${tags[2]}
+- Past Exposure: ${tags[3]}
+- Coping Strategy: ${tags[4]}`,
           },
         ],
       },
     ];
 
-    const { candidates } = await this.ai.models.generateContent({
-      model: this.model,
-      config,
-      contents,
-    });
+    console.log(
+      `Bullying Message: "${input.userInput}"
+            User's Emotional Tags:
+- Emotion: ${tags[0]}
+- Perceived Intent: ${tags[1]}
+- Suggested Reaction (if sent to a friend): ${tags[2]}
+- Past Exposure: ${tags[3]}
+- Coping Strategy: ${tags[4]}`,
+    );
 
-    let response: string[] = [];
-    const { content } = candidates?.[0] as Candidate;
+    try {
+      const { candidates } = await this.ai.models.generateContent({
+        model: this.model,
+        config,
+        contents,
+      });
 
-    if (content?.parts?.[0]?.text) {
-      response = content.parts[0]?.['text']
+      const content = candidates?.[0]?.content?.parts?.[0]?.text || '';
+      if (!content.length || content.length < 30) {
+        console.warn('Gemini returned a short or empty response');
+        return fallbackResponseCustom();
+      }
+
+      const lines = content
         .split('\n')
-        .filter((line) => line.trim() !== '');
-    }
+        .map((line) => line.trim())
+        .filter((line) => line !== '');
 
-    if (!Object.entries(response).length) {
-      throw new Error('No response from AI');
+      console.log('Parsed Lines:', lines);
+      const indexOfFirst = lines.findIndex((line) => /^1\./.test(line));
+      const indexOfSecond = lines.findIndex((line) => /^2\./.test(line));
+      const indexOfThird = lines.findIndex((line) => /^3\./.test(line));
+      const indexOfLast = lines.findIndex((line) => /^4\./.test(line));
+      if (indexOfSecond === -1 || indexOfThird === -1 || indexOfLast === -1) {
+        console.warn('Could not find section 2 in response');
+        return fallbackResponseCustom();
+      }
+
+      const immediate = lines.slice(indexOfFirst + 1, indexOfSecond);
+      const longTerm = lines.slice(indexOfSecond + 1, indexOfThird);
+      const copingAdvice = lines.slice(indexOfThird + 1, indexOfLast);
+      const encouragingWords = lines.slice(indexOfLast + 1);
+
+      if (
+        immediate.length === 0 ||
+        longTerm.length === 0 ||
+        copingAdvice.length === 0 ||
+        encouragingWords.length === 0
+      ) {
+        console.warn('Parsed sections are empty');
+        return fallbackResponseCustom();
+      }
+
+      if (immediate.length > 4) {
+        immediate.splice(4);
+      }
+      if (longTerm.length > 4) {
+        longTerm.splice(4);
+      }
+      return {
+        'immediate-action': immediate,
+        'long-term-skills': longTerm,
+        'coping-advice': copingAdvice,
+        'encouraging-words': encouragingWords,
+      };
+    } catch (error) {
+      log('Error in getAction:', error);
+      return fallbackResponseCustom();
     }
-    return { script: response };
   }
 }
