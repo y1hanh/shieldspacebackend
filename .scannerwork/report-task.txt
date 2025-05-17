@@ -1,0 +1,6 @@
+projectKey=FIT5120-Iteration-2
+serverUrl=http://localhost:9000
+serverVersion=25.3.0.104237
+dashboardUrl=http://localhost:9000/dashboard?id=FIT5120-Iteration-2
+ceTaskId=0815521a-35c1-418f-956c-f3770ef43889
+ceTaskUrl=http://localhost:9000/api/ce/task?id=0815521a-35c1-418f-956c-f3770ef43889
